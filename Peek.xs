@@ -5,13 +5,16 @@
 #undef PerlIO_printf
 #undef PerlIO_vprintf
 #undef PerlIO_stderr
+#undef PerlIO_putc
+#undef PerlIO_puts
 
 #define PerlIO request_rec
 #define PerlIO_printf rprintf
 #define PerlIO_vprintf(r,fmt,vlist) \
  vbprintf(r->connection->client, fmt, vlist)
 #define PerlIO_stderr() perl_request_rec(NULL)
-
+#define PerlIO_putc(r,c) rputc(c,r)
+#define PerlIO_puts(r,s) rputs(s,r)
 #else
 #include "EXTERN.h"
 #include "perl.h"
@@ -84,6 +87,157 @@ fprintgg(file, name, sv, level)
 	}
 }
 
+
+static void
+fprintpv(file, pv, cur, len)
+    PerlIO *file;
+    char *pv;
+    STRLEN cur;
+    STRLEN len;
+{
+    SV  *pv_lim_sv = perl_get_sv("Devel::Peek::pv_limit", FALSE);
+    STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
+    STRLEN out = 0;
+    int truncated = 0;
+    int nul_terminated = len > cur && pv[cur] == '\0';
+
+    PerlIO_putc(file, '"');
+    for (; cur--; pv++) {
+	if (pv_lim && out >= pv_lim) {
+            truncated++;
+	    break;
+        }
+        if (isPRINT(*pv)) {
+	    STRLEN len = 2;
+            switch (*pv) {
+		case '\t':
+		    PerlIO_puts(file, "\\t"); break;
+		case '\n':
+		    PerlIO_puts(file, "\\n"); break;
+		case '\r':
+		    PerlIO_puts(file, "\\r"); break;
+		case '\f':
+		    PerlIO_puts(file, "\\f"); break;
+		case '"':
+		    PerlIO_puts(file, "\\\""); break;
+		case '\\':
+		    PerlIO_puts(file, "\\\\"); break;
+		default:
+		    PerlIO_putc(file, *pv);
+		    len = 1;
+                    break;
+            }
+            out += len;
+        } else {
+	    if (cur && isDIGIT(*(pv+1))) {
+		PerlIO_printf(file, "\\%03o", *pv);
+		out += 4;
+	    } else {
+		char tmpbuf[5];
+		sprintf(tmpbuf, "\\%o", *pv);
+		PerlIO_puts(file, tmpbuf);
+		out += strlen(tmpbuf);
+	    }
+        }
+    }
+    PerlIO_putc(file, '"');
+    if (truncated)
+       PerlIO_puts(file, "...");
+    if (nul_terminated)
+       PerlIO_puts(file, "\\0");
+}
+ 
+
+void
+DumpMagic(level,mg,lim)
+I32 level;
+MAGIC *mg;
+I32 lim;
+{
+    for (; mg; mg = mg->mg_moremagic) {
+ 	m_printf(level, PerlIO_stderr(), "  MAGIC = %p\n", mg);
+ 	if (mg->mg_virtual) {
+            MGVTBL *v = mg->mg_virtual;
+ 	    char *s = 0;
+ 	    if      (v == &vtbl_sv)         s = "vtbl_sv";
+            else if (v == &vtbl_env)        s = "env";
+            else if (v == &vtbl_envelem)    s = "envelem";
+            else if (v == &vtbl_sig)        s = "sig";
+            else if (v == &vtbl_sigelem)    s = "sigelem";
+            else if (v == &vtbl_pack)       s = "pack";
+            else if (v == &vtbl_packelem)   s = "packelem";
+            else if (v == &vtbl_dbline)     s = "dbline";
+            else if (v == &vtbl_isa)        s = "isa";
+            else if (v == &vtbl_arylen)     s = "arylen";
+            else if (v == &vtbl_glob)       s = "glob";
+            else if (v == &vtbl_mglob)      s = "mglob";
+            else if (v == &vtbl_nkeys)      s = "nkeys";
+            else if (v == &vtbl_taint)      s = "taint";
+            else if (v == &vtbl_substr)     s = "substr";
+            else if (v == &vtbl_vec)        s = "vec";
+            else if (v == &vtbl_pos)        s = "pos";
+            else if (v == &vtbl_bm)         s = "bm";
+            else if (v == &vtbl_fm)         s = "fm";
+            else if (v == &vtbl_uvar)       s = "uvar";
+            else if (v == &vtbl_defelem)    s = "defelem";
+#ifdef USE_LOCALE_COLLATE
+	    else if (v == &vtbl_collxfrm)   s = "collxfrm";
+#endif
+#ifdef OVERLOAD
+	    else if (v == &vtbl_amagic)     s = "amagic";
+	    else if (v == &vtbl_amagicelem) s = "amagicelem";
+#endif
+	    if (s) {
+	        m_printf(level, PerlIO_stderr(), "    MG_VIRTUAL = &vtbl_%s\n", s);
+	    } else {
+	        m_printf(level, PerlIO_stderr(), "    MG_VIRTUAL = %p\n", v);
+            }
+        } else {
+	   m_printf(level, PerlIO_stderr(), "    MG_VIRTUAL = 0\n");
+	}
+	if (mg->mg_private)
+	    m_printf(level, PerlIO_stderr(), "    MG_PRIVATE = %d\n", mg->mg_private);
+	if (isPRINT(mg->mg_type)) {
+	   m_printf(level, PerlIO_stderr(), "    MG_TYPE = '%c'\n", mg->mg_type);
+	} else {
+	   m_printf(level, PerlIO_stderr(), "    MG_TYPE = '\%o'\n", mg->mg_type);
+        }
+        if (mg->mg_flags) {
+            m_printf(level, PerlIO_stderr(), "    MG_FLAGS = 0x%02X\n", mg->mg_flags);
+	    if (mg->mg_flags & MGf_TAINTEDDIR) {
+	        m_printf(level, PerlIO_stderr(), "      TAINTEDDIR\n");
+	    }
+	    if (mg->mg_flags & MGf_REFCOUNTED) {
+	        m_printf(level, PerlIO_stderr(), "      REFCOUNTED\n");
+	    }
+            if (mg->mg_flags & MGf_GSKIP) {
+	        m_printf(level, PerlIO_stderr(), "      GSKIP\n");
+	    }
+	    if (mg->mg_flags & MGf_MINMATCH) {
+	        m_printf(level, PerlIO_stderr(), "      MINMATCH\n");
+	    }
+        }
+	if (mg->mg_obj) {
+	    m_printf(level, PerlIO_stderr(), "    MG_OBJ = %p\n", mg->mg_obj);
+	    if (mg->mg_flags & MGf_REFCOUNTED) {
+	       loopDump++;
+	       DumpLevel(level+2, mg->mg_obj, lim); /* MG is already +1 */
+               loopDump--;
+            }
+	}
+        if (mg->mg_ptr) {
+	    m_printf(level, PerlIO_stderr(), "    MG_PTR = %p", mg->mg_ptr);
+	    if (mg->mg_len) {
+                PerlIO_putc(PerlIO_stderr(), ' ');
+                fprintpv(PerlIO_stderr(), mg->mg_ptr, mg->mg_len, 0);
+            }
+            PerlIO_putc(PerlIO_stderr(), '\n');
+        }
+        if (mg->mg_len)
+	    m_printf(level, PerlIO_stderr(), "    MG_LEN = %d\n", mg->mg_len);
+    }
+}
+
 void
 Dump(sv,lim)
 SV *sv;
@@ -145,22 +299,51 @@ I32 lim;
     if (flags & SVp_SCREAM)	strcat(d, "SCREAM,");
 
     switch (type) {
+    case SVt_PVFM:
     case SVt_PVCV:
 #ifdef SVpcv_ANON
       if (flags & SVpcv_ANON)	strcat(d, "ANON,");
+      if (flags & SVpcv_UNIQUE)       strcat(d, "UNIQUE,");
       if (flags & SVpcv_CLONE)	strcat(d, "CLONE,");
       if (flags & SVpcv_CLONED)	strcat(d, "CLONED,");
+      if (flags & SVpcv_NODEBUG) strcat(d, "NODEBUG,");
 #else
       if (CvANON(sv))	strcat(d, "ANON,");
+      if (CvUNIQUE(sv))       strcat(d, "UNIQUE,");
       if (CvCLONE(sv))	strcat(d, "CLONE,");
       if (CvCLONED(sv))	strcat(d, "CLONED,");
+      if (CvNODEBUG(sv)) strcat(d, "NODEBUG,");
 #endif 
       break;
     case SVt_PVGV:
 #ifdef SVpgv_MULTI
       if (flags & SVpgv_MULTI) strcat(d, "MULTI,");
 #else
-      if (GvMULTI(sv))         strcat(d, "MULTI,");
+	if (GvINTRO(sv))	strcat(d, "INTRO,");
+	if (GvMULTI(sv))	strcat(d, "MULTI,");
+	if (GvASSUMECV(sv))	strcat(d, "ASSUMECV,");
+	if (GvIMPORTED(sv)) {
+	    strcat(d, "IMPORT");
+	    if (GvIMPORTED(sv) == GVf_IMPORTED)
+		strcat(d, "ALL,");
+	    else {
+		strcat(d, "(");
+		if (GvIMPORTED_SV(sv))	strcat(d, " SV");
+		if (GvIMPORTED_AV(sv))	strcat(d, " AV");
+		if (GvIMPORTED_HV(sv))	strcat(d, " HV");
+		if (GvIMPORTED_CV(sv))	strcat(d, " CV");
+		strcat(d, " ),");
+	    }
+	}
+	break;
+    case SVt_PVBM:
+	if (SvTAIL(sv))	strcat(d, "TAIL,");
+	if (SvCOMPILED(sv))	strcat(d, "COMPILED,");
+	break;
+    case SVt_PVHV:
+	if (HvSHAREKEYS(sv))	strcat(d, "SHAREKEYS,");
+	if (HvLAZYDEL(sv))	strcat(d, "LAZYDEL,");
+	break;
 #endif
     }
 
@@ -224,8 +407,12 @@ I32 lim;
 	PerlIO_printf(PerlIO_stderr(),"UNKNOWN%s\n", tmpbuf);
 	return;
     }
-    if (type >= SVt_PVIV || type == SVt_IV)
-	m_printf(level, PerlIO_stderr(), "  IV = %ld\n", (long)SvIVX(sv));
+    if ((type >= SVt_PVIV && type != SVt_PVHV) || type == SVt_IV) {
+	m_printf(level, PerlIO_stderr(), "  IV = %ld", (long)SvIVX(sv));
+	if (SvOOK(sv))
+	    PerlIO_printf(PerlIO_stderr(), "  (OFFSET)");
+	PerlIO_putc(PerlIO_stderr(), '\n');
+    }
     if (type >= SVt_PVNV || type == SVt_NV)
 	m_printf(level, PerlIO_stderr(), "  NV = %.*g\n", DBL_DIG, SvNVX(sv));
     if (SvROK(sv)) {
@@ -240,18 +427,18 @@ I32 lim;
     if (type < SVt_PV)
 	return;
     if (type <= SVt_PVLV) {
-	if (SvPVX(sv))
-	    m_printf(level, PerlIO_stderr(), 
-		     "  PV = 0x%lx \"%s\"\n%*s  CUR = %ld\n%*s  LEN = %ld\n",
-		     (long)SvPVX(sv), SvPVX(sv), 2*level - 2, "",
-		     (long)SvCUR(sv), 2*level - 2, "", (long)SvLEN(sv));
-	else
+	if (SvPVX(sv)) {
+	    m_printf(level, PerlIO_stderr(),"  PV = 0x%lx ", (long)SvPVX(sv));
+	    fprintpv(PerlIO_stderr(), SvPVX(sv), SvCUR(sv), SvLEN(sv));
+	    PerlIO_printf(PerlIO_stderr(), "\n%*s  CUR = %ld\n%*s  LEN = %ld\n",
+		                           2*level - 2, "", (long)SvCUR(sv),
+	                                   2*level - 2, "", (long)SvLEN(sv));
+	} else
 	    m_printf(level, PerlIO_stderr(), "  PV = 0\n");
     }
     if (type >= SVt_PVMG) {
-	if (SvMAGIC(sv)) {
-	    m_printf(level, PerlIO_stderr(), "  MAGIC = 0x%lx\n", (long)SvMAGIC(sv));
-	}
+	if (SvMAGIC(sv))
+            DumpMagic(level, SvMAGIC(sv), lim);
 	if (SvSTASH(sv))
 	    fprinth(PerlIO_stderr(), "  STASH", SvSTASH(sv));
     }
@@ -269,10 +456,15 @@ I32 lim;
 	m_printf(level, PerlIO_stderr(), "  FILL = %ld\n", (long)AvFILL(sv));
 	m_printf(level, PerlIO_stderr(), "  MAX = %ld\n", (long)AvMAX(sv));
 	m_printf(level, PerlIO_stderr(), "  ARYLEN = 0x%lx\n", (long)AvARYLEN(sv));
-	if (AvREAL(sv))
-	    m_printf(level, PerlIO_stderr(), "  FLAGS = (REAL)\n");
-	else
-	    m_printf(level, PerlIO_stderr(), "  FLAGS = ()\n");
+
+	flags = AvFLAGS(sv);
+	d = tmpbuf;
+	*d = '\0';
+	if (flags & AVf_REAL)	strcat(d, ",REAL");
+	if (flags & AVf_REIFY)	strcat(d, ",REIFY");
+	if (flags & AVf_REUSED)	strcat(d, ",REUSED");
+	m_printf(level, PerlIO_stderr(), "  FLAGS = (%s)\n", (*d ? d + 1 : ""));
+
 	if (loopDump < lim && av_len((AV*)sv) >= 0) {
 	  loopDump++;
 	  for (count = 0; count <=  av_len((AV*)sv) && count < lim; 
@@ -307,7 +499,9 @@ I32 lim;
 	  loopDump--;
 	  hv_iterinit(hv);
 	  while ((elt = hv_iternextsv(hv,&key,&len)) && count--) {
-	    m_printf(level, PerlIO_stderr(), "Elt \"%s\" => 0x%lx\n", key, elt);
+	    m_printf(level, PerlIO_stderr(), "Elt ");
+            fprintpv(PerlIO_stderr(), key, len, 0);
+            PerlIO_printf(PerlIO_stderr(), " => 0x%lx\n", elt);
 	    DumpLevel(level,elt,lim);
 	  }
 	  hv_iterinit(hv);		/* Return to status quo */
@@ -327,13 +521,20 @@ I32 lim;
 	fprintg(PerlIO_stderr(), "  FILEGV", CvFILEGV(sv));
 	m_printf(level, PerlIO_stderr(), "  DEPTH = %ld\n", (long)CvDEPTH(sv));
 	m_printf(level, PerlIO_stderr(), "  PADLIST = 0x%lx\n", (long)CvPADLIST(sv));
+	m_printf(level, PerlIO_stderr(), "  OUTSIDE = 0x%lx\n", (long)CvOUTSIDE(sv));
+#ifdef USE_THREADS
+	m_printf(level, PerlIO_stderr(), "  MUTEXP = 0x%lx\n", (long)CvMUTEXP(sv));
+	m_printf(level, PerlIO_stderr(), "  OWNER = 0x%lx\n", (long)CvOWNER(sv));
+#endif /* USE_THREADS */
+	m_printf(level, PerlIO_stderr(), "  FLAGS = 0x%lx\n",
+		      (unsigned long)CvFLAGS(sv));
 	if (type == SVt_PVFM)
 	    m_printf(level, PerlIO_stderr(), "  LINES = %ld\n", (long)FmLINES(sv));
 	break;
     case SVt_PVGV:
 	m_printf(level, PerlIO_stderr(), "  NAME = \"%s\"\n", GvNAME(sv));
 	m_printf(level, PerlIO_stderr(), "  NAMELEN = %ld\n", (long)GvNAMELEN(sv));
-	fprinth(PerlIO_stderr(), "  STASH", GvSTASH(sv));
+	fprinth(PerlIO_stderr(), "  GvSTASH", GvSTASH(sv));
 	m_printf(level, PerlIO_stderr(), "  GP = 0x%lx\n", (long)GvGP(sv));
 	m_printf(level, PerlIO_stderr(), "    SV = 0x%lx\n", (long)GvSV(sv));
 	m_printf(level, PerlIO_stderr(), "    REFCNT = %ld\n", (long)GvREFCNT(sv));
@@ -346,6 +547,7 @@ I32 lim;
 	m_printf(level, PerlIO_stderr(), "    LASTEXPR = %ld\n", (long)GvLASTEXPR(sv));
 	m_printf(level, PerlIO_stderr(), "    LINE = %ld\n", (long)GvLINE(sv));
 	m_printf(level, PerlIO_stderr(), "    FLAGS = 0x%x\n", (int)GvFLAGS(sv));
+	fprintg(PerlIO_stderr(), "    FILEGV", GvFILEGV(sv));
 	fprintg(PerlIO_stderr(), "    EGV", GvEGV(sv));
 	break;
     case SVt_PVIO:

@@ -1,7 +1,7 @@
 Apache::Peek is Ilya Zakharevich's Devel::Peek module that sends
 output to the browser instead of stderr.
 
-see Apache.pat for the diffs between Apache::Peek and Devel::Peek 0.84
+see Apache.pat for the diffs between Apache::Peek and Devel::Peek 0.86
 
 -Doug MacEachern
 

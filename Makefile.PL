@@ -35,7 +35,5 @@ WriteMakefile(
     'LIBS'	=> [''],   # e.g., '-lm' 
     'DEFINE'	=> $define,     # e.g., '-DHAVE_SOMETHING' 
     'INC'	=> $inc,     # e.g., '-I/usr/include/other' 
-   'dist'    => {
-	COMPRESS=> 'gzip -9f', SUFFIX=>'gz',
-    },
+    'dist' => {COMPRESS=>'gzip -9f', SUFFIX=>'gz'},
 );
