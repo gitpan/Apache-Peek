@@ -1,0 +1,46 @@
+#define PERL_NO_GET_CONTEXT
+
+#ifdef MOD_PERL
+
+#include "mod_perl.h"
+
+#else
+
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+
+#endif
+
+MODULE = Apache::Peek   PACKAGE = Apache::Peek
+
+void
+Dump(sv, lim=4)
+    SV *sv
+    I32	lim
+
+    PPCODE:
+    {
+    SV *pv_lim_sv = perl_get_sv("Devel::Peek::pv_limit", FALSE);
+    STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
+    SV *dumpop = perl_get_sv("Devel::Peek::dump_ops", FALSE);
+    I32 save_dumpindent = PL_dumpindent;
+    request_rec *r = modperl_global_request(aTHX_ NULL);
+    PerlIO *fp = PerlIO_tmpfile();
+    modperl_config_req_t *rcfg = modperl_config_req_get(r);
+    char tmpbuf[256];
+    int count;
+    
+    PL_dumpindent = 2;
+    
+    do_sv_dump(0, fp, sv, 0, lim, dumpop && SvTRUE(dumpop), pv_lim);
+    PerlIO_rewind(fp);
+    
+    while ( (count = PerlIO_read(fp, tmpbuf, sizeof(tmpbuf))) > 0) {
+        MP_FAILURE_CROAK(modperl_wbucket_write(aTHX_ rcfg->wbucket,
+                                               tmpbuf, &count));
+    }
+    PerlIO_close(fp);
+    PL_dumpindent = save_dumpindent;
+    }
+

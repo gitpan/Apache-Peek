@@ -1,0 +1,41 @@
+#define PERL_NO_GET_CONTEXT
+
+#ifdef MOD_PERL
+
+#include "modules/perl/mod_perl.h"
+
+#else
+
+#include "EXTERN.h"
+#include "perl.h"
+#include "XSUB.h"
+
+#endif
+
+#include "ppport.h"
+
+MODULE = Apache::Peek   PACKAGE = Apache::Peek
+
+void
+Dump(sv, lim=4)
+    SV *sv
+    I32	lim
+
+    PPCODE:
+    {
+    SV *pv_lim_sv = perl_get_sv("Apache::Peek::pv_limit", FALSE);
+    STRLEN pv_lim = pv_lim_sv ? SvIV(pv_lim_sv) : 0;
+    SV *dumpop = perl_get_sv("Apache::Peek::dump_ops", FALSE);
+    I32 save_dumpindent = PL_dumpindent;
+    request_rec *r = perl_request_rec(NULL);
+    PerlIO *fp = PerlIO_tmpfile();
+
+    PL_dumpindent = 2;
+    
+    do_sv_dump(0, fp, sv, 0, lim, dumpop && SvTRUE(dumpop), pv_lim);
+    PerlIO_rewind(fp);
+    ap_send_fd(fp, r);
+    PerlIO_close(fp);
+    PL_dumpindent = save_dumpindent;
+    }
+

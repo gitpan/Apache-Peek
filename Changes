@@ -1,0 +1,19 @@
+
+=head1 NAME
+
+Revision history for Perl extension Apache::Peek.
+
+=head1 1.01 - May 1, 2003
+
+- initial port to 5.8 and mod_perl 2.0 (adding ppport.h, ithreads
+  support and using perlio layers where possible to talk to mp2)
+
+  now supporting:
+  5.005_0x                 all
+  5.6.x                    only Dump()
+  5.8.x (w/  -Duseperlio)  all
+  5.8.x (w/o -Duseperlio)  none
+
+- added a test suite based on Apache::Test
+
+- taking over the maintenance of Apache::Peek

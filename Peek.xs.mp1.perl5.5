@@ -1,4 +1,7 @@
+#define PERL_NO_GET_CONTEXT
+
 #ifdef MOD_PERL
+
 #include "modules/perl/mod_perl.h"
 
 #undef PerlIO
@@ -20,6 +23,8 @@
 #include "perl.h"
 #include "XSUB.h"
 #endif
+
+#include "ppport.h"
 
 #define LANGDUMPMAX 4
 /* #define fprintf		 */
@@ -165,16 +170,16 @@ my_sv_peek(SV *sv)   /* stolen from sv.c */
 	sv_catpv(t, "WILD");
 	goto finish;
     }
-    else if (sv == &sv_undef || sv == &sv_no || sv == &sv_yes) {
-	if (sv == &sv_undef) {
-	    sv_catpv(t, "SV_UNDEF");
+    else if (sv == &PL_sv_undef || sv == &PL_sv_no || sv == &PL_sv_yes) {
+	if (sv == &PL_sv_undef) {
+	    sv_catpv(t, "PL_SV_UNDEF");
 	    if (!(SvFLAGS(sv) & (SVf_OK|SVf_OOK|SVs_OBJECT|
 				 SVs_GMG|SVs_SMG|SVs_RMG)) &&
 		SvREADONLY(sv))
 		goto finish;
 	}
-	else if (sv == &sv_no) {
-	    sv_catpv(t, "SV_NO");
+	else if (sv == &PL_sv_no) {
+	    sv_catpv(t, "PL_SV_NO");
 	    if (!(SvFLAGS(sv) & (SVf_ROK|SVf_OOK|SVs_OBJECT|
 				 SVs_GMG|SVs_SMG|SVs_RMG)) &&
 		!(~SvFLAGS(sv) & (SVf_POK|SVf_NOK|SVf_READONLY|
@@ -184,7 +189,7 @@ my_sv_peek(SV *sv)   /* stolen from sv.c */
 		goto finish;
 	}
 	else {
-	    sv_catpv(t, "SV_YES");
+	    sv_catpv(t, "PL_SV_YES");
 	    if (!(SvFLAGS(sv) & (SVf_ROK|SVf_OOK|SVs_OBJECT|
 				 SVs_GMG|SVs_SMG|SVs_RMG)) &&
 		!(~SvFLAGS(sv) & (SVf_POK|SVf_NOK|SVf_READONLY|
@@ -1087,7 +1092,7 @@ DeadCode()
 		    
 		    pad = AvARRAY((AV*)svp[i]);
 		    argav = (AV*)pad[0];
-		    if (!argav || (SV*)argav == &sv_undef) {
+		    if (!argav || (SV*)argav == &PL_sv_undef) {
 			PerlIO_printf(PerlIO_stderr(), "    closure-template\n");
 			continue;
 		    }

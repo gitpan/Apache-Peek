@@ -1,0 +1,11 @@
+#XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
+name:         Apache-Peek
+version:      1.01
+version_from: Peek.pm
+installdirs:  site
+requires:
+    Apache::Test:                  1.01
+    Devel::Peek:                   0.96
+
+distribution_type: module
+generated_by: ExtUtils::MakeMaker version 6.10_03

@@ -1,0 +1,20 @@
+package Apache::Peek;
+
+use strict;
+use warnings;
+
+use XSLoader ();
+use base qw(Exporter Devel::Peek);
+
+our $VERSION = 'INSERT';
+our @EXPORT = qw(Dump DumpArray);
+
+use mod_perl;
+die "This module was built against mod_perl 1.0 ", 
+    "and can't be used with $mod_perl::VERSION, "
+    unless $mod_perl::VERSION < 1.98;
+
+XSLoader::load 'Apache::Peek';
+
+1;
+

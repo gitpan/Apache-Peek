@@ -1,0 +1,22 @@
+package Apache::Peek;
+
+use strict;
+use warnings;
+
+require Exporter;
+require DynaLoader;
+require Devel::Peek;
+
+our @ISA = qw(Exporter DynaLoader Devel::Peek);
+
+our $VERSION = "INSERT";
+our @EXPORT = qw(Dump);
+
+use mod_perl;
+die "This module was built against mod_perl 2.0 ", 
+    "and can't be used with $mod_perl::VERSION, "
+    unless $mod_perl::VERSION > 1.98;
+
+bootstrap Apache::Peek;
+
+1;
