@@ -1,11 +1,13 @@
+# http://module-build.sourceforge.net/META-spec.html
 #XXXXXXX This is a prototype!!!  It will change in the future!!! XXXXX#
 name:         Apache-Peek
-version:      1.01
+version:      1.02
 version_from: Peek.pm
 installdirs:  site
 requires:
-    Apache::Test:                  1.01
+    Apache::Test:                  1.10
     Devel::Peek:                   0.96
+    mod_perl:                      1.9915
 
 distribution_type: module
-generated_by: ExtUtils::MakeMaker version 6.10_03
+generated_by: ExtUtils::MakeMaker version 6.25_07

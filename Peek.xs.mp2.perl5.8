@@ -37,8 +37,9 @@ static SSize_t PerlIORequestRec_write(pTHX_ PerlIO *f, const void *vbuf,
 #endif
 
     rcfg = modperl_config_req_get(st->r);
-    MP_FAILURE_CROAK(modperl_wbucket_write(aTHX_ rcfg->wbucket,
-                                           vbuf, &count));
+    MP_RUN_CROAK(modperl_wbucket_write(aTHX_ rcfg->wbucket,
+                                       vbuf, &count),
+                 "Apache::Peek::write");
 
     return (SSize_t) count;
 }

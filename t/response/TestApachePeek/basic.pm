@@ -20,8 +20,6 @@ BEGIN {
     }
 }
 
-BEGIN { warn join "\n", @INC; }
-
 use Apache::Peek;
 
 sub handler {

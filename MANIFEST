@@ -12,10 +12,9 @@ Peek.xs.mp1.perl5.6
 Peek.xs.mp1.perl5.8
 Peek.xs.mp2.perl5.6
 Peek.xs.mp2.perl5.8
-Peek.pm
 ppport.h
 t/TEST.PL
 t/response/TestApachePeek/basic.pm
 t/apachepeek/basic.t
-run_version_tests
-META.yml                                Module meta-data in YAML
+t/conf/extra.conf.in
+META.yml                                 Module meta-data (added by MakeMaker)

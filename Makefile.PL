@@ -8,7 +8,7 @@ use Symbol;
 
 use constant DEVEL => getpwuid($>) eq 'stas';
 
-my $VERSION = '1.01';
+my $VERSION = '1.02';
 
 my @clean_files = ();
 
@@ -29,12 +29,12 @@ warn "Goind to build against mod_perl/$mod_perl::VERSION Perl/$]\n";
 test_configure($mp_gen);
 
 my %prereq = (
-    'Apache::Test' => 1.01,
-    'Devel::Peek'  => 0.96,
+    "Apache::Test" => "1.10", # ipv6 fixes
+    "Devel::Peek"  => 0.96,
 );
 
 my %common_opts = (
-    NAME => "Apache::Peek",
+    NAME         => "Apache::Peek",
     VERSION_FROM => "Peek.pm",
     XSPROTOARG   => '-noprototypes',
     DEFINE       => '-DMOD_PERL',
@@ -56,6 +56,7 @@ if ($mp_gen == 1) {
 
 }
 else {
+    $prereq{mod_perl} = 1.9915;
     require ModPerl::MM;
     ModPerl::MM::WriteMakefile(
         %common_opts,

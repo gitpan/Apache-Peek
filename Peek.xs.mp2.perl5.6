@@ -37,8 +37,9 @@ Dump(sv, lim=4)
     PerlIO_rewind(fp);
     
     while ( (count = PerlIO_read(fp, tmpbuf, sizeof(tmpbuf))) > 0) {
-        MP_FAILURE_CROAK(modperl_wbucket_write(aTHX_ rcfg->wbucket,
-                                               tmpbuf, &count));
+        MP_RUN_CROAK(modperl_wbucket_write(aTHX_ rcfg->wbucket,
+                                           tmpbuf, &count),
+                     "Apache::Peek::write");
     }
     PerlIO_close(fp);
     PL_dumpindent = save_dumpindent;

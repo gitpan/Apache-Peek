@@ -3,6 +3,17 @@
 
 Revision history for Perl extension Apache::Peek.
 
+
+
+=head1 1.02 - Mon Jan  3 13:33:22 EST 2005
+
+- adjust XS to use the latest mod_perl 2.0 API (require 1.99_15 for
+  mp2 builds)
+
+- require Apache::Test 1.10 -ipv6 fixes
+
+
+
 =head1 1.01 - May 1, 2003
 
 - initial port to 5.8 and mod_perl 2.0 (adding ppport.h, ithreads
