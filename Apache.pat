@@ -1,73 +1,46 @@
---- CHANGES	1998/02/10 21:32:04	1.3
-+++ CHANGES	1998/02/10 21:41:09
-@@ -26,6 +26,7 @@
- 	When calculating junk inside subs, divide by refcount.
- 0.84:
- 	Indented output.
+--- Peek.xs.orig	Sat Oct  3 21:49:04 1998
++++ Peek.xs	Thu Oct 22 11:52:54 1998
+@@ -1,6 +1,25 @@
++#ifdef MOD_PERL
++#include "modules/perl/mod_perl.h"
 +
- 0.85:
- 	By Gisle Aas: format SvPVX, print magic (but not unrefcounted mg_obj);
- 	A lot of new fields stolen from sv_dump();
-@@ -37,3 +38,5 @@
- 	   - Don't print IV for hashes as KEY is the same field
- 	   - Tag GvSTASH as "GvSTASH" in order to not confuse it with
- 	     the other STASH field, e.g.  Dump(bless \*foo, "bar")
++#undef PerlIO
++#undef PerlIO_printf
++#undef PerlIO_vprintf
++#undef PerlIO_stderr
++#undef PerlIO_putc
++#undef PerlIO_puts
 +
-+0.8601: hook into Apache/mod_perl environment instead of stderr [dougm]
---- MANIFEST	1998/02/10 21:32:04	1.3
-+++ MANIFEST	1998/02/10 21:32:27
-@@ -5,3 +5,4 @@
- Makefile.PL
- test.pl
- README
-+Apache.pat
---- Makefile.PL	1998/02/10 21:32:04	1.3
-+++ Makefile.PL	1998/02/10 21:32:27
-@@ -1,11 +1,39 @@
- use ExtUtils::MakeMaker;
- # See lib/ExtUtils/MakeMaker.pm for details of how to influence
- # the contents of the Makefile that is written.
-+
-+my $inc = "";
-+my $define = "";
-+my $mod_perl = 1;
-+
-+if ($mod_perl) {
-+    eval {
-+	use mod_perl 1.07_03;
-+	require Apache::src;
-+	my $src = Apache::src->new;
-+
-+	unless (-d $src->dir) {
-+	    for my $path ($src->find) {
-+		my $ans = prompt("Configure with $path ?", "y");
-+		next unless $ans =~ /^y$/i;
-+		$src->dir($path);
-+		last;
-+	    }
-+	}
-+
-+	$inc = $src->inc if -d $src->dir;
-+    };
-+
-+    die "Please edit Makefile.PL's \$inc\n" unless $inc;
-+
-+    $define = "-DMOD_PERL";
-+}
-+
- WriteMakefile(
--    'NAME'	=> 'Devel::Peek',
-+    'NAME'	=> 'Apache::Peek',
-     'VERSION_FROM'	=> 'Peek.pm',
-     'LIBS'	=> [''],   # e.g., '-lm' 
--    'DEFINE'	=> '',     # e.g., '-DHAVE_SOMETHING' 
--    'INC'	=> '',     # e.g., '-I/usr/include/other' 
-+    'DEFINE'	=> $define,     # e.g., '-DHAVE_SOMETHING' 
-+    'INC'	=> $inc,     # e.g., '-I/usr/include/other' 
-     'dist' => {COMPRESS=>'gzip -9f', SUFFIX=>'gz'},
- );
---- Peek.pm	1998/02/10 21:32:04	1.3
-+++ Peek.pm	1998/02/10 21:32:59
++#define PerlIO request_rec
++#define PerlIO_printf rprintf
++#define PerlIO_vprintf(r,fmt,vlist) \
++ vbprintf(r->connection->client, fmt, vlist)
++#define PerlIO_stderr() perl_request_rec(NULL)
++#define PerlIO_putc(r,c) rputc(c,r)
++#define PerlIO_puts(r,s) rputs(s,r)
++#else
+ #include "EXTERN.h"
+ #include "perl.h"
+ #include "XSUB.h"
++#endif
+ 
+ #define LANGDUMPMAX 4
+ /* #define fprintf		 */
+@@ -1143,10 +1162,10 @@
+ 	PerlIO_printf(PerlIO_stderr(), "%s: perl not compiled with DEBUGGING_MSTATS\n",str);
+ #endif
+ 
+-MODULE = Devel::Peek		PACKAGE = Devel::Peek
++MODULE = Apache::Peek		PACKAGE = Apache::Peek
+ 
+ void
+-mstat(str="Devel::Peek::mstat: ")
++mstat(str="Apache::Peek::mstat: ")
+ char *str
+ 
+ void
+--- Peek.pm.orig	Sat Oct  3 21:28:20 1998
++++ Peek.pm	Thu Oct 22 11:55:17 1998
 @@ -1,12 +1,12 @@
 -package Devel::Peek;
 +package Apache::Peek;
@@ -191,67 +164,56 @@
  );
  %EXPORT_TAGS = ('ALL' => \@EXPORT_OK);
  
--$VERSION = $VERSION = 0.86;
-+$VERSION = $VERSION = 0.8601;
+-$VERSION = $VERSION = 0.95;
++$VERSION = $VERSION = 0.9501;
  
 -bootstrap Devel::Peek;
 +bootstrap Apache::Peek;
  
- # Preloaded methods go here.
+ sub DumpWithOP ($;$) {
+    local($Devel::Peek::dump_ops)=1;
+--- Makefile.PL.orig	Tue Jul 28 20:16:40 1998
++++ Makefile.PL	Thu Oct 22 11:54:41 1998
+@@ -2,11 +2,13 @@
+ # See lib/ExtUtils/MakeMaker.pm for details of how to influence
+ # the contents of the Makefile that is written.
  
---- Peek.xs	1998/02/10 21:32:04	1.3
-+++ Peek.xs	1998/02/10 21:38:25
-@@ -1,6 +1,25 @@
-+#ifdef MOD_PERL
-+#include "modules/perl/mod_perl.h"
++use Apache::src ();
 +
-+#undef PerlIO
-+#undef PerlIO_printf
-+#undef PerlIO_vprintf
-+#undef PerlIO_stderr
-+#undef PerlIO_putc
-+#undef PerlIO_puts
-+
-+#define PerlIO request_rec
-+#define PerlIO_printf rprintf
-+#define PerlIO_vprintf(r,fmt,vlist) \
-+ vbprintf(r->connection->client, fmt, vlist)
-+#define PerlIO_stderr() perl_request_rec(NULL)
-+#define PerlIO_putc(r,c) rputc(c,r)
-+#define PerlIO_puts(r,s) rputs(s,r)
-+#else
- #include "EXTERN.h"
- #include "perl.h"
- #include "XSUB.h"
-+#endif
- 
- #define LANGDUMPMAX 4
- /* #define fprintf		 */
-@@ -673,10 +692,10 @@
- 	PerlIO_printf(PerlIO_stderr(), "%s: perl not compiled with DEBUGGING_MSTATS\n",str);
- #endif
- 
--MODULE = Devel::Peek		PACKAGE = Devel::Peek
-+MODULE = Apache::Peek		PACKAGE = Apache::Peek
- 
- void
--mstat(str="Devel::Peek::mstat: ")
-+mstat(str="Apache::Peek::mstat: ")
- char *str
- 
- void
---- README	1998/02/10 21:32:04	1.3
-+++ README	1998/02/10 21:34:05
-@@ -1,3 +1,12 @@
-+Apache::Peek is Ilya Zakharevich's Devel::Peek module that sends
-+output to the browser instead of stderr.
-+
-+see Apache.pat for the diffs between Apache::Peek and Devel::Peek 0.86
-+
-+-Doug MacEachern
-+
-+------------------------------------------------------------------------------
-+
- LEGALESE
- ~~~~~~~~
-      Copyright (c) 1995 Ilya Zakharevich. All rights reserved.
+ WriteMakefile(
+-    'NAME'	=> 'Devel::Peek',
++    'NAME'	=> 'Apache::Peek',
+     'VERSION_FROM'	=> 'Peek.pm',
+     'LIBS'	=> [''],   # e.g., '-lm' 
+-    'DEFINE'	=> '',     # e.g., '-DHAVE_SOMETHING' 
+-    'INC'	=> '',     # e.g., '-I/usr/include/other' 
++    'DEFINE'	=> '-DMOD_PERL',     # e.g., '-DHAVE_SOMETHING' 
++    'INC'	=> Apache::src->new->inc,     # e.g., '-I/usr/include/other' 
+     'dist' => {COMPRESS=>'gzip -9f', SUFFIX=>'gz'},
+ );
+*** README.orig	Mon Jul 14 15:22:26 1997
+--- README	Thu Oct 22 11:55:42 1998
+***************
+*** 1,3 ****
+--- 1,12 ----
++ Apache::Peek is Ilya Zakharevich's Devel::Peek module that sends
++ output to the browser instead of stderr.
++ 
++ see Apache.pat for the diffs between Apache::Peek and Devel::Peek 0.95
++ 
++ -Doug MacEachern
++ 
++ ------------------------------------------------------------------------------
++ 
+  LEGALESE
+  ~~~~~~~~
+       Copyright (c) 1995 Ilya Zakharevich. All rights reserved.
+*** MANIFEST.orig	Mon Jul  1 15:19:48 1996
+--- MANIFEST	Thu Oct 22 11:52:54 1998
+***************
+*** 5,7 ****
+--- 5,8 ----
+  Makefile.PL
+  test.pl
+  README
++ Apache.pat

@@ -36,7 +36,12 @@ Dump(\&prototyped);
 Dump(\&Dump);
 Dump ($x, 10);
 DumpArray (10, 1,2,3);
+$a = "a\nb\b\n\r";
+$a =~ s/^..//s;
+Dump($a);
 
 mstat("Point 2");
 
+DumpWithOP($closure);
+DumpProg;
 DeadCode;
