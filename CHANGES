@@ -1,0 +1,30 @@
+0.3: Some functions return SV * now.
+0.4: Hashes dumped recursively.
+     Additional fields for CV added.
+0.5: Prototypes for functions supported. 
+     Strings are consostently in quotes now.
+     Name changed to Devel::Peek (former ExtUtils::Peek).
+0.7:
+	New function mstat added.
+	Docs added (thanks to Dean Roehrich).
+
+0.8:
+	Exports Dump and mstat.
+	Docs list more details.
+	Arrays print addresses of SV.
+	CV: STASH renamed to COMP_STASH. The package of GV is printed now.
+	Updated for newer overloading implementation (but will not report
+		packages with overloading).
+0.81:
+	Implements and exports DeadCode().
+	Buglet in the definition of mstat for malloc-less perl corrected.
+0.82:
+	New style PADless CV allowed.
+0.83:
+	DumpArray added.
+	Compatible with PerlIO.
+	When calculating junk inside subs, divide by refcount.
+0.84:
+	Indented output.
+
+0.85: hook into Apache/mod_perl environment instead of stderr [dougm]
