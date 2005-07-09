@@ -3,15 +3,15 @@ package TestApachePeek::basic;
 use strict;
 use warnings FATAL => 'all';
 
-use mod_perl;
-use constant MP2 => $mod_perl::VERSION < 1.99 ? 0 : 1;
+use mod_perl2;
+use constant MP2 => 1;
 
 BEGIN {
     if (MP2) {
-        require Apache::RequestRec;
-        require Apache::RequestIO;
-        require Apache::Const;
-        Apache::Const->import(-compile => 'OK');
+        require Apache2::RequestRec;
+        require Apache2::RequestIO;
+        require Apache2::Const;
+        Apache2::Const->import(-compile => 'OK');
     }
     else {
         require Apache;
@@ -29,9 +29,9 @@ sub handler {
 
     $r->send_http_header() unless MP2;
 
-    Apache::Peek::Dump(\&Apache::Const::OK);
+    Apache::Peek::Dump(\&Apache2::Const::OK);
 
-    return MP2 ? Apache::OK : Apache::Constants::OK;
+    return MP2 ? Apache2::Const::OK : Apache::Constants::OK;
 }
 1;
 __END__

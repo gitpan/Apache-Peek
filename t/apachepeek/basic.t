@@ -12,5 +12,11 @@ my $str = GET_BODY $location;
 
 ok $str;
 
-ok t_cmp(qr/Apache::Const.*?OK/, $str);
+eval { require mod_perl2 };
+unless ($@) {
+    ok t_cmp($str, qr/Apache2::Const.*?OK/);
+}
+else {
+    ok t_cmp($str, qr/Apache::Const.*?OK/);
+}
 

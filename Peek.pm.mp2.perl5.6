@@ -12,10 +12,10 @@ our @ISA = qw(Exporter DynaLoader Devel::Peek);
 our $VERSION = "INSERT";
 our @EXPORT = qw(Dump);
 
-use mod_perl;
+use mod_perl2;
 die "This module was built against mod_perl 2.0 ", 
     "and can't be used with $mod_perl::VERSION, "
-    unless $mod_perl::VERSION > 1.98;
+    unless $mod_perl2::VERSION > 1.99022;
 
 bootstrap Apache::Peek;
 

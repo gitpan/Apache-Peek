@@ -3,7 +3,9 @@
 
 Revision history for Perl extension Apache::Peek.
 
-
+=head1 1.03 - 
+- Adapt to the new mp2 API RC5+
+- Take Maintainership Philip M. Gollucci <pgollucci@p6m7g8.com>
 
 =head1 1.02 - Mon Jan  3 13:33:22 EST 2005
 
