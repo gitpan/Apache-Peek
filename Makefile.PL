@@ -6,7 +6,7 @@ use Symbol;
 
 use constant DEVEL => getpwuid($>) =~ /^(?:stas|pgollucci)$/o;
 
-my $VERSION = '1.03';
+my $VERSION = '1.04';
 
 my %prereq = (
               "Apache::Test" => "1.25", # ipv6 fixes
@@ -123,6 +123,8 @@ sub prepare_build ($$) {
   }
 
   # adjust the version and glue the doc (open() for 5.005_03 support)
+  unlink "Peek.pm" if "Peek.pm";
+
   my ($in, $out) = ($pm, 'Peek.pm');
   my ($ifh, $ofh) = (Symbol::gensym(), Symbol::gensym());
   open $ifh,  "<$in"  or die "can't open $in: $!";

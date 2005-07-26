@@ -3,8 +3,9 @@ package TestApachePeek::basic;
 use strict;
 use warnings FATAL => 'all';
 
-use mod_perl2;
-use constant MP2 => 1;
+eval { require mod_perl2 };
+
+use constant MP2 => $@ ? 0 : 1;
 
 BEGIN {
     if (MP2) {
