@@ -2,6 +2,7 @@ Makefile.PL
 MANIFEST
 README
 Changes
+Peek.pm
 Peek.pm.mp1.perl5.5
 Peek.pm.mp1.perl5.6
 Peek.pm.mp1.perl5.8

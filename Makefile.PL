@@ -6,7 +6,7 @@ use Symbol;
 
 use constant DEVEL => getpwuid($>) =~ /^(?:stas|pgollucci)$/o;
 
-my $VERSION = '1.04';
+my $VERSION = '1.05';
 
 my %prereq = (
               "Apache::Test" => "1.25", # ipv6 fixes

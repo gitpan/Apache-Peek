@@ -3,6 +3,10 @@
 
 Revision history for Perl extension Apache::Peek.
 
+=head1 1.05
+- Add Peek.pm to Manifest so that make dist will actually distrubute it.
+  [Philip M. Gollucci <pggollucci@p6m7g8.com>]
+
 =head1 1.04 - Tues Jul 26 02:50:00 EST 2005
 - Distrubute placeholder Peek.pm to appease the PAUSE indexer
   per Andreas J. Koenig <andreas.koenig.gmwojprw@franz.ak.mind.de>
