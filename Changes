@@ -3,18 +3,30 @@
 
 Revision history for Perl extension Apache::Peek.
 
-=head1 1.05
+=head 1.06 - Sunday Aug 6 19:21:01 PDT 2006
+
+- Fixed uninitialized errors in CPAN installs.
+  [Philip M. Gollucci <pggollucci@p6m7g8.com>]
+
+- Fixed perl 5.8.8+ builds on unix.
+  [Philip M. Gollucci <pggollucci@p6m7g8.com>]
+
+=head1 1.05 - Tues Aug 9 03:13:57 EST 2005
+     
 - Add Peek.pm to Manifest so that make dist will actually distrubute it.
   [Philip M. Gollucci <pggollucci@p6m7g8.com>]
 
 =head1 1.04 - Tues Jul 26 02:50:00 EST 2005
+
 - Distrubute placeholder Peek.pm to appease the PAUSE indexer
   per Andreas J. Koenig <andreas.koenig.gmwojprw@franz.ak.mind.de>
   [Philip M. Gollucci <pggollucci@p6m7g8.com>]
 
 =head1 1.03 - Mon July 9 20:00:00 EST 2005
+
 - Adapt to the new mp2 API RC5+
-- Take Maintainership Philip M. Gollucci <pgollucci@p6m7g8.com>
+- Take Maintainership 
+  [Philip M. Gollucci <pgollucci@p6m7g8.com>]
 
 =head1 1.02 - Mon Jan  3 13:33:22 EST 2005
 

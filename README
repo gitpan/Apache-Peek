@@ -27,4 +27,3 @@ Makefile.PL, e.g.:
     env MOD_PERL=2 perl Makefile.PL
     make && make test && make install
 
-

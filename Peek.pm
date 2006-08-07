@@ -8,7 +8,7 @@ use warnings;
 use XSLoader ();
 use base qw(Exporter Devel::Peek);
 
-our $VERSION = 1.05;
+our $VERSION = 1.06;
 our @EXPORT = qw(Dump DumpArray);
 
 use mod_perl2;

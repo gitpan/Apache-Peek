@@ -4,9 +4,9 @@ use Config;
 use File::Copy ();
 use Symbol;
 
-use constant DEVEL => getpwuid($>) =~ /^(?:stas|pgollucci)$/o;
+use constant DEVEL => getpwuid($>) =~ /^(?:stas|pgollucci)$/;
 
-my $VERSION = '1.05';
+my $VERSION = '1.06';
 
 my %prereq = (
               "Apache::Test" => "1.25", # ipv6 fixes
@@ -22,7 +22,7 @@ my %common_opts = (
 );
 
 MAIN: {
-  exit &main();
+  exit main();
 }
 
 sub main {
@@ -182,7 +182,7 @@ EOF
 
   if ($wanted == 2) {
     eval { require mod_perl2 };
-    if ($mod_perl2::VERSION < 1.99023 || $@) {
+    if (defined $mod_perl2::VERSION && $mod_perl2::VERSION < 1.99023 || $@) {
       die "You don't seem to have mod_perl 2.0 installed";
     }
     else {
