@@ -6,7 +6,7 @@ use Symbol;
 
 use constant DEVEL => getpwuid($>) =~ /^(?:stas|pgollucci)$/;
 
-my $VERSION = '1.06';
+my $VERSION = '1.07';
 
 my %prereq = (
               "Apache::Test" => "1.25", # ipv6 fixes
@@ -45,7 +45,7 @@ sub main {
   $common_opts{clean} = { FILES =>"@clean_files"};
 
   if ($mp_wanted == 2) {
-    $prereq{mod_perl} = 1.99023;
+    $prereq{mod_perl2} = 1.99023;
     require ModPerl::MM;
     ModPerl::MM::WriteMakefile(%common_opts);
   }

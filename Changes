@@ -3,6 +3,11 @@
 
 Revision history for Perl extension Apache::Peek.
 
+=head 1.07 Tue Apr 17 15:00:55 PDT 2007
+
+- Fix invalid prereq check of mod_perl.pm vs mod_perl2.pm
+  [Dintelmann, Peter" <Peter.Dintelmann@Dresdner-Bank.com>]
+
 =head 1.06 - Sunday Aug 6 19:21:01 PDT 2006
 
 - Fixed uninitialized errors in CPAN installs.
